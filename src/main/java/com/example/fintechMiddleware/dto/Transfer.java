@@ -1,23 +1,9 @@
-package com.example.fintechMiddleware.dto;
-
-//import lombok.Data;
-//
-//import java.math.BigDecimal;
-//
-//@Data
-//public class TransferRequest {
-//    private String fromAccountNumber;
-//    private String toBankCode;
-//    private String toAccountNumber;
-//    private BigDecimal amount;
-//}
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
-public class TransferRequest {
+public class Transfer {
     @NotBlank(message = "Account number is required")
     private String accountNumber;
 
@@ -38,9 +24,9 @@ public class TransferRequest {
     private String transactionRef;
 
     // Constructors, getters, setters
-    public TransferRequest() {}
+    public Transfer() {}
 
-    public TransferRequest(String accountNumber, String bankCode, Long amount, String narration, String transactionRef) {
+    public Transfer(String accountNumber, String bankCode, Long amount, String narration, String transactionRef) {
         this.accountNumber = accountNumber;
         this.bankCode = bankCode;
         this.amount = amount;

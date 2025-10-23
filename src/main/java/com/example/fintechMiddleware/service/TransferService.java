@@ -152,64 +152,64 @@ public class TransferService {
         }
     }
 
-    public TransferResponse processTransfer(TransferRequest request, String userEmail) {
-        Account fromAccount = accountRepository.findByAccountNumberAndEmail(request.getFromAccountNumber(), userEmail)
-                .orElseThrow(() -> {
-                    log.error("Account not found: {} for user: {}", request.getFromAccountNumber(), userEmail);
-                    return new RuntimeException("Account not found");
-                });
-
-        if (fromAccount.getBalance().compareTo(request.getAmount()) < 0) {
-            log.error("Insufficient balance for account: {}", request.getFromAccountNumber());
-            throw new RuntimeException("Insufficient balance");
-        }
-
-        String clientRef = UUID.randomUUID().toString();
-
-        // Step 1: Account Inquiry
-        Map<String, Object> inquiry = accountInquiry(request.getToAccountNumber(), request.getToBankCode());
-        if (!"00".equals(inquiry.get("responseCode"))) {
-            log.error("Invalid beneficiary account: {}", inquiry.get("responseMessage"));
-            throw new RuntimeException("Invalid beneficiary account: " + inquiry.get("responseMessage"));
-        }
-
-        // Step 2: Deduct from sender
-        fromAccount.setBalance(fromAccount.getBalance().subtract(request.getAmount()));
-        accountRepository.save(fromAccount);
-
-        // Step 3: Credit Advice
-        Map<String, Object> credit = creditAdvice(clientRef, request.getAmount(), request.getToAccountNumber(), request.getToBankCode());
-        if (!"00".equals(credit.get("responseCode"))) {
-            // Rollback on failure
-            fromAccount.setBalance(fromAccount.getBalance().add(request.getAmount()));
-            accountRepository.save(fromAccount);
-            log.error("Transfer failed: {}", credit.get("responseMessage"));
-            throw new RuntimeException("Transfer failed: " + credit.get("responseMessage"));
-        }
-
-        // Step 4: Requery for confirmation
-        Map<String, Object> status = requery(clientRef);
-        String finalStatus = "00".equals(status.get("responseCode")) ? "SUCCESS" : "FAILED";
-
-        // Log transaction
-        Transaction transaction = new Transaction();
-        transaction.setAccountId(fromAccount.getId());
-        transaction.setType("TRANSFER");
-        transaction.setDescription("Interswitch transfer to " + request.getToAccountNumber() + " (" + request.getToBankCode() + ")");
-        transaction.setAmount(request.getAmount());
-        transaction.setStatus(finalStatus);
-        transaction.setTxnRef(clientRef);
-        transaction.setTimestamp(LocalDateTime.now());
-        transactionRepository.save(transaction);
-
-        log.info("Transfer successful from account: {} to {}:{}, amount: {}", request.getFromAccountNumber(),
-                request.getToBankCode(), request.getToAccountNumber(), request.getAmount());
-
-        return TransferResponse.builder()
-                .transactionId(clientRef)
-                .status(finalStatus)
-                .message("Transfer " + finalStatus.toLowerCase())
-                .newBalance(fromAccount.getBalance())
-                .build();
-    }
+//    public TransferResponse processTransfer(TransferRequest request, String userEmail) {
+//        Account fromAccount = accountRepository.findByAccountNumberAndEmail(request.getFromAccountNumber(), userEmail)
+//                .orElseThrow(() -> {
+//                    log.error("Account not found: {} for user: {}", request.getFromAccountNumber(), userEmail);
+//                    return new RuntimeException("Account not found");
+//                });
+//
+//        if (fromAccount.getBalance().compareTo(request.getAmount()) < 0) {
+//            log.error("Insufficient balance for account: {}", request.getFromAccountNumber());
+//            throw new RuntimeException("Insufficient balance");
+//        }
+//
+//        String clientRef = UUID.randomUUID().toString();
+//
+//        // Step 1: Account Inquiry
+//        Map<String, Object> inquiry = accountInquiry(request.getToAccountNumber(), request.getToBankCode());
+//        if (!"00".equals(inquiry.get("responseCode"))) {
+//            log.error("Invalid beneficiary account: {}", inquiry.get("responseMessage"));
+//            throw new RuntimeException("Invalid beneficiary account: " + inquiry.get("responseMessage"));
+//        }
+//
+//        // Step 2: Deduct from sender
+//        fromAccount.setBalance(fromAccount.getBalance().subtract(request.getAmount()));
+//        accountRepository.save(fromAccount);
+//
+//        // Step 3: Credit Advice
+//        Map<String, Object> credit = creditAdvice(clientRef, request.getAmount(), request.getToAccountNumber(), request.getToBankCode());
+//        if (!"00".equals(credit.get("responseCode"))) {
+//            // Rollback on failure
+//            fromAccount.setBalance(fromAccount.getBalance().add(request.getAmount()));
+//            accountRepository.save(fromAccount);
+//            log.error("Transfer failed: {}", credit.get("responseMessage"));
+//            throw new RuntimeException("Transfer failed: " + credit.get("responseMessage"));
+//        }
+//
+//        // Step 4: Requery for confirmation
+//        Map<String, Object> status = requery(clientRef);
+//        String finalStatus = "00".equals(status.get("responseCode")) ? "SUCCESS" : "FAILED";
+//
+//        // Log transaction
+//        Transaction transaction = new Transaction();
+//        transaction.setAccountId(fromAccount.getId());
+//        transaction.setType("TRANSFER");
+//        transaction.setDescription("Interswitch transfer to " + request.getToAccountNumber() + " (" + request.getToBankCode() + ")");
+//        transaction.setAmount(request.getAmount());
+//        transaction.setStatus(finalStatus);
+//        transaction.setTxnRef(clientRef);
+//        transaction.setTimestamp(LocalDateTime.now());
+//        transactionRepository.save(transaction);
+//
+//        log.info("Transfer successful from account: {} to {}:{}, amount: {}", request.getFromAccountNumber(),
+//                request.getToBankCode(), request.getToAccountNumber(), request.getAmount());
+//
+//        return TransferResponse.builder()
+//                .transactionId(clientRef)
+//                .status(finalStatus)
+//                .message("Transfer " + finalStatus.toLowerCase())
+//                .newBalance(fromAccount.getBalance())
+//                .build();
+//    }
 }
